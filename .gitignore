@@ -26,3 +26,8 @@
 *.exe
 *.out
 *.app
+
+tmpcode
+unittest-cpp
+test_bbi
+bbi
