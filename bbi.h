@@ -93,6 +93,7 @@ public:
     bool is_zero() const;
     bool is_negative() const;
     int get_bit(size_t) const;
+    // TODO abs?
     operator bool() const;
     bool operator! () const;
 

@@ -33,9 +33,63 @@ TEST(CreateAssign) {
     BigInt b19 (b4);
 }
 
-TEST(ToBinary) {
-    // Conversion to binary string is the basis of all other tests
+// Conversion to binary string is the basis of all other tests
+TEST(ChunkBits) {
+    string chunk_string (BigInt::BITS_PER_CHUNK, '0');
+    bbi_chunk_t b = 0;
+    CHECK(BigInt::chunk_bits(b) == chunk_string);
 
+    bbi_chunk_t c = 1;
+    chunk_string[ BigInt::BITS_PER_CHUNK - 1 ] = '1';
+    CHECK(BigInt::chunk_bits(c) == chunk_string);
+
+    bbi_chunk_t d = BigInt::HALF_MAX_CHUNK;
+    chunk_string[ BigInt::BITS_PER_CHUNK - 1 ] = '0';
+    chunk_string[0] = '1';
+    CHECK(BigInt::chunk_bits(d) == chunk_string);
+
+    string chunk_string2 (BigInt::BITS_PER_CHUNK, '1');
+    bbi_chunk_t e = BigInt::MAX_CHUNK;
+    CHECK(BigInt::chunk_bits(e) == chunk_string2);
+}
+
+TEST(AllBits) {
+
+}
+
+// Tests for .bits() that don't need operatorX
+TEST(BitsSimple) {
+    BigInt b = 0;
+    CHECK(b.bits() == "0");
+
+    BigInt b2 = 1;
+    CHECK(b2.bits() == "1");
+
+    BigInt b3 = 2;
+    CHECK(b3.bits() == "10");
+
+    BigInt b4 = 3;
+    CHECK(b4.bits() == "11");
+
+    BigInt b5 = 4;
+    CHECK(b5.bits() == "100");
+
+    BigInt b6 = BigInt::HALF_MAX_CHUNK;
+    string cs6 (BigInt::BITS_PER_CHUNK, '0');
+    cs6[0] = '1';
+    CHECK(b6.bits() == cs6);
+
+    BigInt b7 = BigInt::MAX_CHUNK;
+    string cs7 (BigInt::BITS_PER_CHUNK, '1');
+    CHECK(b7.bits() == cs7);
+
+    BigInt b8 ("12345");
+    string cs8 = "11000000111001";
+    CHECK(b8.bits() == cs8);
+
+    BigInt b9 ("123451234512345");
+    string cs9 = "11100000100011100111010111110101110110111011001";
+    CHECK(b9.bits() == cs9);
 }
 
 TEST(MethodIsZero) {
