@@ -71,6 +71,7 @@ BigInt::BigInt(bbi_chunk_t val) {
 BigInt::BigInt(const BigInt& other) {
     if (other.data == 0)
         return;
+    // This is the only time we shouldn't use init()
     bbi_data::size_type other_size = other.size();
     data = new bbi_data (other_size);
     negative = other.negative;
