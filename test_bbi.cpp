@@ -43,6 +43,14 @@ TEST(MethodIsZero) {
     CHECK(b2.is_zero());
     BigInt c2 (1);
     CHECK(!c2.is_zero());
+
+    BigInt b3 ("0");
+    CHECK(b3.is_zero());
+    BigInt c3 ("1");
+    CHECK(!c3.is_zero());
+
+    BigInt c4 ("12345");
+    CHECK(!c4.is_zero());
 }
 
 // TEST(MethodGetBit) {
