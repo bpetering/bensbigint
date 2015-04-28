@@ -64,7 +64,7 @@ void BigInt::init(bbi_data::size_type initial_chunks) {
 BigInt::BigInt(bbi_chunk_t val) {
     init(INITIAL_CHUNKS);
     // (*data)[i] is quicker (I think) because it avoids the bounds checking
-    // of data->at(i) - hence former is used
+    // of data->at(i)
     (*data)[0] = val;
 }
 
@@ -106,9 +106,7 @@ BigInt::BigInt(string s) {
         bbi_chunk_t digit_val = s[i] - '0';
         BigInt pos_add (digit_val);
         pos_add *= pos_val;
-        //cout << "adding: " << pos_add.bits() << endl;
         this->operator+=(pos_add);
-        //cout << "current: " << this->bits() << endl << endl;
         pos_val *= ten;
         --i;
     }
@@ -646,7 +644,8 @@ inline bbi_data::size_type BigInt::num_free_chunks() const {
 }
 
 // int main() {
-//     BigInt b ("12345");
-//     cout << b.bits() << endl;
+//     BigInt b9 ("123451234512345");
+//     string cs9 = "11100000100011100111010111110101110110111011001";
+//     cout << b9.bits() << endl;
 // }
 

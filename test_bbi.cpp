@@ -53,11 +53,12 @@ TEST(ChunkBits) {
     CHECK(BigInt::chunk_bits(e) == chunk_string2);
 }
 
-TEST(AllBits) {
+// Tests for .all_bits() that don't need operatorX directly or indirectly
+TEST(AllBitsSimple) {
 
 }
 
-// Tests for .bits() that don't need operatorX
+// Tests for .bits() that don't need operatorX directly or indirectly
 TEST(BitsSimple) {
     BigInt b = 0;
     CHECK(b.bits() == "0");
@@ -83,13 +84,37 @@ TEST(BitsSimple) {
     string cs7 (BigInt::BITS_PER_CHUNK, '1');
     CHECK(b7.bits() == cs7);
 
+    // Check we can store numbers above certain hard limits (2**32, 2**64 etc)
+
+    // Need 14 bits
     BigInt b8 ("12345");
     string cs8 = "11000000111001";
     CHECK(b8.bits() == cs8);
 
-    BigInt b9 ("123451234512345");
-    string cs9 = "11100000100011100111010111110101110110111011001";
-    CHECK(b9.bits() == cs9);
+    // // Need 47 bits
+    // BigInt b9 ("123451234512345");
+    // string cs9 = "11100000100011100111010111110101110110111011001";
+    // CHECK(b9.bits() == cs9);
+
+    // // Need 81 bits
+    // BigInt b10 ("1234512345123451234512345");
+    // string cs10 = "100000101011010110000110001011111001010110000110100110001101111010110110111011001";
+    // CHECK(b10.bits() == cs10);
+
+    // // Need 130 bits
+    // BigInt b11 ("1234512345123451234512345123451234512345");
+    // string cs11 = "1110100000101111100110110111100001010010100010001100011001011110110110111111100000011100011101010111101011101111010110110111011001";
+    // CHECK(b11.bits() == cs11);
+
+    // // Need 130 bits
+    // BigInt b12 ("1234512345123451234512345123451234512345");
+    // string cs12 = "1110100000101111100110110111100001010010100010001100011001011110110110111111100000011100011101010111101011101111010110110111011001";
+    // CHECK(b12.bits() == cs12);
+
+    // // Need 263 bits
+    // BigInt b13 ("12345123451234512345123451234512345123451234512345123451234512345123451234512345");
+    // string cs13 = "11010101001110101010100010000101001101100100101010100110011111110110100011100011111100110100100100011001011000010010010101011100000000011101010011101000010101000111100000001011101110011101111011011010010100000101100101010101101010111101011101111010110110111011001";
+    // CHECK(b13.bits() == cs13);
 }
 
 TEST(MethodIsZero) {
@@ -111,10 +136,6 @@ TEST(MethodIsZero) {
     BigInt c4 ("12345");
     CHECK(!c4.is_zero());
 }
-
-// TEST(MethodGetBit) {
-
-// }
 
 // TEST(CompareEq) {
 //     BigInt b1 = 5;
@@ -143,31 +164,157 @@ TEST(MethodIsZero) {
 //     CHECK(b3 > b1);
 // }
 
-// TEST(AddAssign) {
-//     BigInt b = 5;
-//     BigInt c = 7;
-//     b += c;
-//     CHECK(b == 12);
-//     BigInt b2 = 100;
-//     BigInt c2 = 200;
-//     b2 += c2;
-//     CHECK(b2 == 300);
-//     BigInt b3 = 200;
-//     BigInt c3 = 100;
-//     b3 += c3;
-//     CHECK(b3 == 300);
-// }
+TEST(AddAssign) {
+    BigInt b (0);
+    CHECK(b.bits() == "0");
+    b += 1;
+    CHECK(b.bits() == "1");
+    b += 1;
+    CHECK(b.bits() == "10");
+    b += 1;
+    CHECK(b.bits() == "11");
+    b += 1;
+    CHECK(b.bits() == "100");
 
-// TEST(MultAssign) {
-//     BigInt b = 5;
-//     BigInt c = 7;
-//     b *= c;
-//     CHECK(b == 35);
-//     BigInt b2 = 42;
-//     BigInt c2 = 10;
-//     b2 *= c2;
-//     CHECK(b2 == 420);
-// }
+    b += 2;
+    CHECK(b.bits() == "110");
+
+    b += 255;
+    CHECK(b.bits() == "100000101");
+
+    // Check various hard limits
+
+    // b += 12345;
+    // b += 123451234512345;
+
+    // Now same tests but with BigInt instead of bbi_chunk_t
+    BigInt c = 0;
+    CHECK(c.bits() == "0");
+    BigInt d = 1;
+    c += d;
+    CHECK(c.bits() == "1");
+    c += d;
+    CHECK(c.bits() == "10");
+    c += d;
+    CHECK(c.bits() == "11");
+    c += d;
+    CHECK(c.bits() == "100");
+
+    BigInt d2 = 2;
+    c += d2;
+    CHECK(c.bits() == "110");
+
+    BigInt d3 = 255;
+    c += d3;
+    CHECK(c.bits() == "100000101");
+
+    // Check hard limits TODO
+}
+
+TEST(MultAssign) {
+    BigInt b = 2;
+    CHECK(b.bits() == "10");
+    b *= 1;
+    CHECK(b.bits() == "10");
+    b *= 2;
+    CHECK(b.bits() == "100");
+    b *= 2;
+    CHECK(b.bits() == "1000");
+    b *= 3;
+    CHECK(b.bits() == "11000");
+    b *= 4;
+    CHECK(b.bits() == "1100000");
+    b *= 5;
+    CHECK(b.bits() == "111100000");
+    b *= 6;
+    CHECK(b.bits() == "101101000000");
+    b *= 7;
+    CHECK(b.bits() == "100111011000000");
+    b *= 8;
+    CHECK(b.bits() == "100111011000000000");
+    b *= 9;
+    CHECK(b.bits() == "101100010011000000000");
+    b *= 10;
+    CHECK(b.bits() == "110111010111110000000000");
+    b *= 11;
+    CHECK(b.bits() == "1001100001000101010000000000");
+    b *= 12;
+    CHECK(b.bits() == "1110010001100111111000000000000");
+    b *= 13;
+    CHECK(b.bits() == "10111001100101000110011000000000000");
+    b *= 14;
+    CHECK(b.bits() == "101000100110000111011001010000000000000");
+    b *= 15;
+    CHECK(b.bits() == "1001100000111011101110111010110000000000000");
+    // check hard limits TODO
+
+    BigInt c (2);
+    BigInt d (1);
+    CHECK(c.bits() == "10");
+    c *= d;
+    CHECK(c.bits() == "10");
+
+    BigInt d2 = 2;
+    c *= d2;
+    CHECK(c.bits() == "100");
+
+    c *= d2;
+    CHECK(c.bits() == "1000");
+
+    BigInt d3 = 3;
+    c *= d3;
+    CHECK(c.bits() == "11000");
+
+    BigInt d4 = 4;
+    c *= d4;
+    CHECK(c.bits() == "1100000");
+
+    BigInt d5 = 5;
+    c *= d5;
+    CHECK(c.bits() == "111100000");
+
+    BigInt d6 = 6;
+    c *= d6;
+    CHECK(c.bits() == "101101000000");
+
+    BigInt d7 = 7;
+    c *= d7;
+    CHECK(c.bits() == "100111011000000");
+
+    BigInt d8 = 8;
+    c *= d8;
+    CHECK(c.bits() == "100111011000000000");
+
+    BigInt d9 = 9;
+    c *= d9;
+    CHECK(c.bits() == "101100010011000000000");
+
+    BigInt d10 = 10;
+    c *= d10;
+    CHECK(c.bits() == "110111010111110000000000");
+
+    BigInt d11 = 11;
+    c *= d11;
+    CHECK(c.bits() == "1001100001000101010000000000");
+
+    BigInt d12 = 12;
+    c *= d12;
+    CHECK(c.bits() == "1110010001100111111000000000000");
+
+    BigInt d13 = 13;
+    c *= d13;
+    CHECK(c.bits() == "10111001100101000110011000000000000");
+
+    BigInt d14 = 14;
+    c *= d14;
+    CHECK(c.bits() == "101000100110000111011001010000000000000");
+
+    BigInt d15 = 15;
+    c *= d15;
+    CHECK(c.bits() == "1001100000111011101110111010110000000000000");
+
+    // check hard limits TODO
+}
 
 // TEST(BitwiseNot) {
 
