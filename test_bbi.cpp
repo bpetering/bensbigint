@@ -33,6 +33,11 @@ TEST(CreateAssign) {
     BigInt b19 (b4);
 }
 
+TEST(ToBinary) {
+    // Conversion to binary string is the basis of all other tests
+
+}
+
 TEST(MethodIsZero) {
     BigInt b = 0;
     CHECK(b.is_zero());

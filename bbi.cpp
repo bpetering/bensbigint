@@ -71,7 +71,7 @@ BigInt::BigInt(bbi_chunk_t val) {
 BigInt::BigInt(const BigInt& other) {
     if (other.data == 0)
         return;
-    // This is the only time we shouldn't use init()
+    // This is the only time we shouldn't use init(), since copying
     bbi_data::size_type other_size = other.size();
     data = new bbi_data (other_size);
     negative = other.negative;
@@ -122,7 +122,7 @@ string BigInt::to_string(unsigned int base=10) const {
         return "bad base value";
     }
     if (base == 2) {
-        ss << bits("");
+        ss << bits();
         string tmp = ss.str();
         string ret;
         if (negative) {
@@ -152,7 +152,7 @@ ostream& operator<< (ostream& o, const BigInt& instance) {
     return o;
 }
 
-string BigInt::bits(bbi_chunk_t n) {
+string BigInt::chunk_bits(bbi_chunk_t n) {
     string ret;
     bbi_chunk_t mask = MASK_LOOKUP_TOP[1];
     for (unsigned int i = 0; i < BITS_PER_CHUNK; ++i) {
@@ -166,17 +166,34 @@ string BigInt::bits(bbi_chunk_t n) {
     return ret;
 }
 
-string BigInt::bits(string sep=" ") const {
+string BigInt::all_bits(string sep=" ") const {
     assert(data);
+    if (is_zero())
+        return "0";
     string ret;
     for (bbi_data::size_type i = data->size()-1; i > 0; --i) {
         bbi_chunk_t n = (*data)[i];
-        ret += bits(n);
+        ret += chunk_bits(n);
         ret += sep;
     }
     bbi_chunk_t n = (*data)[0];
-    ret += bits(n);
+    ret += chunk_bits(n);
     return ret;
+}
+
+string BigInt::bits() const {
+    assert(data);
+    if (is_zero())
+        return "0";
+    string tmp = all_bits("");
+    string::size_type len = tmp.size();
+    string::size_type i;
+    for (i = 0; i < len; ++i) {
+        if (tmp[i] == '1')
+            break;
+    }
+    assert(i < len);
+    return tmp.substr(i);
 }
 
 inline bool BigInt::addn_would_overflow(bbi_chunk_t a, bbi_chunk_t b) {

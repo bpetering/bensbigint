@@ -16,15 +16,26 @@ typedef vector<bbi_chunk_t>     bbi_data;
 
 class BigInt {
 public:
+    // Constructors
     BigInt();
     ~BigInt();
     BigInt(bbi_chunk_t);
     BigInt(const BigInt&);
     BigInt(string);
 
+
+    // Convert to string using given base.
     string to_string(unsigned int) const;
-    string bits(string) const;
-    static string bits(bbi_chunk_t);
+
+    // Convert a single chunk to binary string representation
+    static string chunk_bits(bbi_chunk_t);
+
+    // Convert all chunks to binary representation with given chunk separator
+    string all_bits(string) const;
+
+    // Convert to binary representation with no leading 0s, no separator
+    string bits() const;
+
 
     // Assign and Compare
     BigInt& operator= (bbi_chunk_t);
@@ -41,6 +52,7 @@ public:
     bool operator<= (const BigInt&);
     bool operator>= (bbi_chunk_t);
     bool operator>= (const BigInt&);
+
 
     // Basic arithmetic
     BigInt& operator+= (const BigInt&);
