@@ -114,6 +114,7 @@ private:
     void clear();
     bbi_data::size_type size() const;
     inline bbi_data::size_type num_free_chunks() const;
+    inline bbi_data::size_type freeish_bits() const;
     static inline bool addn_would_overflow(bbi_chunk_t, bbi_chunk_t);
 
     // Safe bool idiom

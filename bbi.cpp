@@ -391,7 +391,9 @@ BigInt& BigInt::operator*= (const BigInt& other) {
             //cout << "not adding" << endl;
         }
         tmp_this <<= 1;
+        //cout << "tmp_this = " << tmp_this.all_bits() << endl;
         tmp_other >>= 1;
+        //cout << "tmp_other = " << tmp_other.bits() << endl << endl;
         //cout << "this = " << (*this).bits() << endl << endl;
     }
 
@@ -482,7 +484,7 @@ BigInt& BigInt::operator<<= (bbi_chunk_t n) {
         return *this;
 
     //cout << "size before: " << data->size() << endl;
-    while (n > (num_free_chunks() * BITS_PER_CHUNK))
+    while (n > freeish_bits())
         expand();
     //cout << "size after: " << data->size() << endl;
 
@@ -636,16 +638,39 @@ void BigInt::clear() {
 inline bbi_data::size_type BigInt::num_free_chunks() const {
     assert(data);
     bbi_data::size_type ret = 0;
-    for (bbi_data::size_type i = data->size()-1; i > 0; --i) {
-        if (!(*data)[i])
+    //cout << "num_free_chunks, size = " << data->size() << endl;
+    bbi_data::size_type sz = data->size();
+    //cout << "size = " << sz << endl;
+    for (bbi_data::size_type i = sz-1; i > 0; --i) {
+        if ((*data)[i] == 0)
             ++ret;
+        else
+            break;
     }
+    //cout << "num_free_chunks = " << ret << endl;
     return ret;
 }
 
+inline bbi_data::size_type BigInt::freeish_bits() const {
+    return num_free_chunks() * BITS_PER_CHUNK;
+}
+
 // int main() {
-//     BigInt b9 ("123451234512345");
-//     string cs9 = "11100000100011100111010111110101110110111011001";
-//     cout << b9.bits() << endl;
+//     // BigInt b9 ("123451234512345");
+//     // string cs9 = "11100000100011100111010111110101110110111011001";
+//     // cout << b9.bits() << endl;
+
+//     // BigInt p = 1;
+//     // BigInt ten = 10;
+//     // for (int i = 0; i < 30; ++i) {
+//     //     cout << p.bits() << endl;
+//     //     p *= ten;
+//     // }
+
+//     // BigInt p = 1;
+//     // for (int i = 0; i < 30; ++i) {
+//     //     cout << p.all_bits() << endl;
+//     //     p <<= 1;
+//     // }
 // }
 
