@@ -579,7 +579,9 @@ bool BigInt::is_zero() const {
     if (data == 0)
         return false;
 
-    for (bbi_data::size_type i = 0; i < data->size(); ++i) {
+    bbi_data::size_type sz = data->size();
+    // Count up more efficient
+    for (bbi_data::size_type i = 0; i < sz; ++i) {
         if ((*data)[i] != 0) {
             return false;
         }
@@ -656,21 +658,8 @@ inline bbi_data::size_type BigInt::freeish_bits() const {
 }
 
 // int main() {
-//     // BigInt b9 ("123451234512345");
-//     // string cs9 = "11100000100011100111010111110101110110111011001";
-//     // cout << b9.bits() << endl;
-
-//     // BigInt p = 1;
-//     // BigInt ten = 10;
-//     // for (int i = 0; i < 30; ++i) {
-//     //     cout << p.bits() << endl;
-//     //     p *= ten;
-//     // }
-
-//     // BigInt p = 1;
-//     // for (int i = 0; i < 30; ++i) {
-//     //     cout << p.all_bits() << endl;
-//     //     p <<= 1;
-//     // }
+//     BigInt b ("-1");
+//     cout << b.all_bits() << endl;
+//     cout << b.is_zero() << endl;
 // }
 
