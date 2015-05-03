@@ -61,10 +61,20 @@ void BigInt::init(bbi_data::size_type initial_chunks) {
     }
 }
 
-BigInt::BigInt(bbi_chunk_t val) {
+// BigInt::BigInt(bbi_chunk_t val) {
+//     init(INITIAL_CHUNKS);
+//     // (*data)[i] is quicker (I think) because it avoids the bounds checking
+//     // of data->at(i)
+//     (*data)[0] = val;
+// }
+
+BigInt::BigInt(bbi_schunk_t val) {
     init(INITIAL_CHUNKS);
-    // (*data)[i] is quicker (I think) because it avoids the bounds checking
-    // of data->at(i)
+    // TODO what if max negative
+    if (val < 0) {
+        val = -val;
+        negative = true;
+    }
     (*data)[0] = val;
 }
 
@@ -657,9 +667,10 @@ inline bbi_data::size_type BigInt::freeish_bits() const {
     return num_free_chunks() * BITS_PER_CHUNK;
 }
 
-// int main() {
-//     BigInt b ("-1");
-//     cout << b.all_bits() << endl;
-//     cout << b.is_zero() << endl;
-// }
+int main() {
+    BigInt b = -4;
+    cout << b.bits() << endl;
+    cout << b.is_zero() << endl;
+    cout << b.is_negative() << endl;
+}
 

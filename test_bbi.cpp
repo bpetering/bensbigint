@@ -155,6 +155,19 @@ TEST(Negative) {
     CHECK(!b3.is_zero());
 }
 
+TEST(Increment) {
+    BigInt b = 0;
+    ++b;
+    CHECK(b.bits() == "1");
+
+    BigInt b2 = 1;
+    b2++;
+    CHECK(b2.bits() == "10");
+
+    BigInt b3 = -1;
+
+}
+
 // TEST(CompareEq) {
 //     BigInt b1 = 5;
 //     BigInt b2 = 5;

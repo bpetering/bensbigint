@@ -19,7 +19,7 @@ public:
     // Constructors
     BigInt();
     ~BigInt();
-    BigInt(bbi_chunk_t);
+    BigInt(bbi_schunk_t);
     BigInt(const BigInt&);
     BigInt(string);
 
