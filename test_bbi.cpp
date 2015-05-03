@@ -4,6 +4,12 @@
 #include <iostream>
 using namespace std;
 
+// TODO
+// - boundary tests for +=, +=, ++
+// - boundary tests for -=, -=, --
+// - are copy tests complete?
+// - cs13 - debug properly
+
 TEST(Sanity)
 {
    CHECK_EQUAL(1, 1);
@@ -120,6 +126,24 @@ TEST(BitsSimple) {
     //CHECK(b13.bits() == cs13);
 }
 
+TEST(MethodGetBit) {
+    BigInt b = 6;
+    CHECK(b.get_bit(0) == 0);
+    CHECK(b.get_bit(1) == 1);
+    CHECK(b.get_bit(2) == 1);
+    CHECK(b.get_bit(3) == 0);
+    CHECK(b.get_bit(12345) == 0);
+
+    BigInt b2 ("1234512345123451234512345123451234512345");
+    string s2 = "1110100000101111100110110111100001010010100010001100011001011110110110111111100000011100011101010111101011101111010110110111011001";
+    string::size_type s2_len = s2.size();
+    int j = 0;
+    for (int i = s2_len - 1; i >= 0; --i) {
+        CHECK(b2.get_bit(j) == s2[i] - '0');
+        ++j;
+    }
+}
+
 TEST(MethodIsZero) {
     BigInt b = 0;
     CHECK(b.is_zero());
@@ -140,7 +164,7 @@ TEST(MethodIsZero) {
     CHECK(!c4.is_zero());
 }
 
-TEST(Negative) {
+TEST(MethodIsNegative) {
     BigInt b ("-0");
     CHECK(b.is_negative());
     CHECK(b.is_zero());
