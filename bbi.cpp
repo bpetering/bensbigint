@@ -1,5 +1,3 @@
-#include "bbi.h"
-
 #include <iostream>
 #include <limits>
 #include <climits>
@@ -8,6 +6,7 @@
 #include <sstream>
 #include <ostream>
 
+#include "bbi.h"
 #include "masklookup.h"
 
 using std::cout;        using std::endl;
@@ -370,11 +369,52 @@ BigInt& BigInt::operator++ () {
     return *this;
 }
 
+
 BigInt& BigInt::operator-= (const BigInt& other) {
     assert(data);
     assert(other.data);
 
+    // // Calculate minimum size for result data
+    // // - start with largest existing size
+    // bbi_data::size_type needed_chunks = max(data->size(), other.size());
+    // while (needed_chunks > data->size())
+    //     expand();
 
+    // bool prev_underflow = false;
+    // unsigned long i;
+    // for (i = 0; i < data->size(); ++i) {
+    //     bbi_chunk_t a = (*data)[i];
+    //     bbi_chunk_t b = (*other.data)[i];
+    //     (*data)[i] = a - b;
+    //     if (prev_underflow) {
+    //         // Check previous iteration
+    //         // This can't overflow, will always have at least one 0 bit
+    //         (*data)[i]++;
+    //         prev_underflow = false;
+    //     }
+    //     if (addn_would_underflow(a, b)) {
+    //         prev_underflow = true;
+    //     }
+    // }
+
+    // bool final_underflow = false;
+    // if (prev_underflow) {
+    //     if ((*data)[i] == MAX_CHUNK)
+    //         final_underflow = true;
+    //     (*data)[i] += 1;
+    //     if (final_underflow) {
+    //         expand();
+    //         (*data)[i+1] += 1;
+    //     }
+    // }
+
+    return *this;
+}
+
+BigInt& BigInt::operator-= (bbi_sval_t n) {
+    assert(data);
+    BigInt tmp (n);
+    this->operator-=(tmp);
     return *this;
 }
 
@@ -383,6 +423,9 @@ BigInt& BigInt::operator-- () {
     this->operator-=(1);
     return *this;
 }
+
+// TODO other-fix for --, ++
+
 
 BigInt& BigInt::operator*= (const BigInt& other) {
     assert(data);
@@ -649,6 +692,7 @@ void BigInt::clear() {
     for (bbi_data::size_type i = 0; i < len; ++i) {
         (*data)[i] = 0;
     }
+    negative = false;
 }
 
 inline bbi_data::size_type BigInt::num_free_chunks() const {
