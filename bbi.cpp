@@ -61,14 +61,7 @@ void BigInt::init(bbi_data::size_type initial_chunks) {
     }
 }
 
-// BigInt::BigInt(bbi_chunk_t val) {
-//     init(INITIAL_CHUNKS);
-//     // (*data)[i] is quicker (I think) because it avoids the bounds checking
-//     // of data->at(i)
-//     (*data)[0] = val;
-// }
-
-BigInt::BigInt(bbi_schunk_t val) {
+BigInt::BigInt(bbi_sval_t val) {
     init(INITIAL_CHUNKS);
     // TODO what if max negative
     if (val < 0) {
@@ -180,12 +173,12 @@ string BigInt::all_bits(string sep=" ") const {
         return "0";
     string ret;
     for (bbi_data::size_type i = data->size()-1; i > 0; --i) {
-        bbi_chunk_t n = (*data)[i];
-        ret += chunk_bits(n);
+        bbi_chunk_t chunk = (*data)[i];
+        ret += chunk_bits(chunk);
         ret += sep;
     }
-    bbi_chunk_t n = (*data)[0];
-    ret += chunk_bits(n);
+    bbi_chunk_t chunk = (*data)[0];
+    ret += chunk_bits(chunk);
     return ret;
 }
 
@@ -215,14 +208,18 @@ inline bool BigInt::addn_would_overflow(bbi_chunk_t a, bbi_chunk_t b) {
 // Assign and Compare
 //
 
-BigInt& BigInt::operator= (bbi_chunk_t n) {
+BigInt& BigInt::operator= (bbi_sval_t val) {
     // Variables tend to hold values of similar sizes, so don't realloc
     // Just zero chunks
     if (data)
         clear();
     else
         data = new bbi_data (INITIAL_CHUNKS);
-    (*data)[0] = n;
+    if (val < 0) {
+        val = -val;     // TODO max negative
+        negative = true;
+    }
+    (*data)[0] = val;
     return *this;
 }
 
@@ -240,9 +237,14 @@ BigInt& BigInt::operator= (const BigInt& other) {
     return *this;
 }
 
-bool BigInt::operator== (bbi_chunk_t n) {
+bool BigInt::operator== (bbi_sval_t val) {
     assert(data);
-    return (*data)[0] == n;
+    if (val < 0) {
+        return ( ((*data)[0] == -val) && negative );
+    }
+    else {
+        return ( (*data)[0] == val );
+    }
 }
 
 bool BigInt::operator== (const BigInt& other) {
@@ -255,15 +257,15 @@ bool BigInt::operator== (const BigInt& other) {
     return true;
 }
 
-bool BigInt::operator!= (bbi_chunk_t n) {
-    return ! this->operator==(n);
+bool BigInt::operator!= (bbi_sval_t val) {
+    return ! this->operator==(val);
 }
 
 bool BigInt::operator!= (const BigInt& other) {
     return ! this->operator==(other);
 }
 
-bool BigInt::operator< (bbi_chunk_t n) {
+bool BigInt::operator< (bbi_sval_t val) {
     return false;
 }
 
@@ -271,7 +273,7 @@ bool BigInt::operator< (const BigInt& other) {
     return false;
 }
 
-bool BigInt::operator> (bbi_chunk_t n) {
+bool BigInt::operator> (bbi_sval_t val) {
     return false;
 }
 
@@ -279,7 +281,7 @@ bool BigInt::operator> (const BigInt& other) {
     return false;
 }
 
-bool BigInt::operator<= (bbi_chunk_t n) {
+bool BigInt::operator<= (bbi_sval_t val) {
     return false;
 }
 
@@ -287,7 +289,7 @@ bool BigInt::operator<= (const BigInt& other) {
     return false;
 }
 
-bool BigInt::operator>= (bbi_chunk_t n) {
+bool BigInt::operator>= (bbi_sval_t val) {
     return false;
 }
 
@@ -299,13 +301,6 @@ bool BigInt::operator>= (const BigInt& other) {
 //
 // Arithmetic
 //
-
-// BigInt& BigInt::operator+= (bbi_chunk_t n) {
-//     assert(data);
-//     BigInt tmp (n);
-//     this->operator+=(tmp);
-//     return *this;
-// }
 
 BigInt& BigInt::operator+= (const BigInt& other) {
     assert(data);
@@ -362,6 +357,13 @@ BigInt& BigInt::operator+= (const BigInt& other) {
     return *this;
 }
 
+BigInt& BigInt::operator+= (bbi_sval_t n) {
+    assert(data);
+    BigInt tmp (n);
+    this->operator+=(tmp);
+    return *this;
+}
+
 BigInt& BigInt::operator++ () {
     assert(data);
     this->operator+=(1);
@@ -371,6 +373,8 @@ BigInt& BigInt::operator++ () {
 BigInt& BigInt::operator-= (const BigInt& other) {
     assert(data);
     assert(other.data);
+
+
     return *this;
 }
 
@@ -461,7 +465,7 @@ BigInt BigInt::operator~ () {
     return ret;
 }
 
-BigInt& BigInt::operator&= (bbi_chunk_t n) {
+BigInt& BigInt::operator&= (bbi_uval_t val) {
     return *this;
 }
 
@@ -469,7 +473,7 @@ BigInt& BigInt::operator&= (const BigInt& other) {
     return *this;
 }
 
-BigInt& BigInt::operator|= (bbi_chunk_t n) {
+BigInt& BigInt::operator|= (bbi_uval_t val) {
     return *this;
 }
 
@@ -477,7 +481,7 @@ BigInt& BigInt::operator|= (const BigInt& other) {
     return *this;
 }
 
-BigInt& BigInt::operator^= (bbi_chunk_t n) {
+BigInt& BigInt::operator^= (bbi_uval_t val) {
     return *this;
 }
 
@@ -488,7 +492,7 @@ BigInt& BigInt::operator^= (const BigInt& other) {
     return *this;
 }
 
-BigInt& BigInt::operator<<= (bbi_chunk_t n) {
+BigInt& BigInt::operator<<= (bbi_uval_t n) {
     assert(data);
     if (n == 0)
         return *this;
@@ -518,7 +522,7 @@ BigInt& BigInt::operator<<= (bbi_chunk_t n) {
     return *this;
 }
 
-BigInt& BigInt::operator>>= (bbi_chunk_t n) {
+BigInt& BigInt::operator>>= (bbi_uval_t n) {
     assert(data);
     if (n == 0)
         return *this;
@@ -537,7 +541,7 @@ BigInt& BigInt::operator>>= (bbi_chunk_t n) {
     return *this;
 }
 
-BigInt BigInt::operator& (bbi_chunk_t n) {
+BigInt BigInt::operator& (bbi_uval_t n) {
     assert(data);
 
     BigInt ret ((*data)[0]);
@@ -550,7 +554,7 @@ BigInt BigInt::operator& (const BigInt& other) {
     return ret;
 }
 
-BigInt BigInt::operator| (bbi_chunk_t n) {
+BigInt BigInt::operator| (bbi_uval_t val) {
     BigInt ret;
     return ret;
 }
@@ -560,7 +564,7 @@ BigInt BigInt::operator| (const BigInt& other) {
     return ret;
 }
 
-BigInt BigInt::operator^ (bbi_chunk_t n) {
+BigInt BigInt::operator^ (bbi_uval_t val) {
     BigInt ret;
     return ret;
 }
@@ -570,12 +574,12 @@ BigInt BigInt::operator^ (const BigInt& other) {
     return ret;
 }
 
-BigInt BigInt::operator<< (bbi_chunk_t) {
+BigInt BigInt::operator<< (bbi_uval_t val) {
     BigInt ret;
     return ret;
 }
 
-BigInt BigInt::operator>> (bbi_chunk_t) {
+BigInt BigInt::operator>> (bbi_uval_t val) {
     BigInt ret;
     return ret;
 }
@@ -667,10 +671,10 @@ inline bbi_data::size_type BigInt::freeish_bits() const {
     return num_free_chunks() * BITS_PER_CHUNK;
 }
 
-int main() {
-    BigInt b = -4;
-    cout << b.bits() << endl;
-    cout << b.is_zero() << endl;
-    cout << b.is_negative() << endl;
-}
+// int main() {
+//     BigInt b = 6;
+//     cout << b.all_bits() << endl;
+//     b += 127;
+//     cout << b.all_bits() << endl;
+// }
 

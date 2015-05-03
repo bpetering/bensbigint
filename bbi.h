@@ -7,11 +7,13 @@
 using std::vector;
 using std::string;
 
-// typedef unsigned long           bbi_chunk_t;
-// typedef signed long             bbi_schunk_t;
-typedef unsigned char           bbi_chunk_t;        // testing
-typedef signed char             bbi_schunk_t;       // testing
+// typedef unsigned long        bbi_chunk_t;    // type for chunks
+// typedef signed long          bbi_sval_t;     // type for signed integer literals
+// typedef unsigned long        bbi_uval_t;     // type for unsigned integer literals (e.g. bit-shifting)
 
+typedef unsigned char           bbi_chunk_t;        // testing
+typedef signed char             bbi_sval_t;         // testing
+typedef unsigned char           bbi_uval_t;         // testing
 typedef vector<bbi_chunk_t>     bbi_data;
 
 class BigInt {
@@ -19,7 +21,7 @@ public:
     // Constructors
     BigInt();
     ~BigInt();
-    BigInt(bbi_schunk_t);
+    BigInt(bbi_sval_t);
     BigInt(const BigInt&);
     BigInt(string);
 
@@ -38,27 +40,38 @@ public:
 
 
     // Assign and Compare
-    BigInt& operator= (bbi_chunk_t);
+    BigInt& operator= (bbi_sval_t);
     BigInt& operator= (const BigInt&);
-    bool operator== (bbi_chunk_t);
+
+    bool operator== (bbi_sval_t);
     bool operator== (const BigInt&);
-    bool operator!= (bbi_chunk_t);
+
+    bool operator!= (bbi_sval_t);
     bool operator!= (const BigInt&);
-    bool operator< (bbi_chunk_t);
+
+    bool operator< (bbi_sval_t);
     bool operator< (const BigInt&);
-    bool operator> (bbi_chunk_t);
+
+    bool operator> (bbi_sval_t);
     bool operator> (const BigInt&);
-    bool operator<= (bbi_chunk_t);
+
+    bool operator<= (bbi_sval_t);
     bool operator<= (const BigInt&);
-    bool operator>= (bbi_chunk_t);
+
+    bool operator>= (bbi_sval_t);
     bool operator>= (const BigInt&);
 
 
     // Basic arithmetic
     BigInt& operator+= (const BigInt&);
+    BigInt& operator+= (bbi_sval_t);
+
     BigInt& operator++ ();
+
     BigInt& operator-= (const BigInt&);
+
     BigInt& operator-- ();
+
     BigInt& operator*= (const BigInt&);
     BigInt& operator/= (const BigInt&);
     BigInt& operator%= (const BigInt&);
@@ -68,26 +81,43 @@ public:
     BigInt operator/ (const BigInt&);
     BigInt operator% (const BigInt&);
 
+    //
     // Bit ops
+    //
     BigInt operator~ ();
-    BigInt& operator&= (bbi_chunk_t);
+
     BigInt& operator&= (const BigInt&);
-    BigInt& operator|= (bbi_chunk_t);
+    BigInt& operator&= (bbi_uval_t);
+
     BigInt& operator|= (const BigInt&);
-    BigInt& operator^= (bbi_chunk_t);
+    BigInt& operator|= (bbi_uval_t);
+
     BigInt& operator^= (const BigInt&);
-    // Don't really need BigInt other for these two
-    BigInt& operator<<= (bbi_chunk_t);
-    BigInt& operator>>= (bbi_chunk_t);
-    BigInt operator& (bbi_chunk_t);
+    BigInt& operator^= (bbi_uval_t);
+
+    // Don't need BigInt other for these two (physical memory limits) but
+    // include for ease of use
+    BigInt& operator<<= (const BigInt&);
+    BigInt& operator<<= (bbi_uval_t);
+
+    BigInt& operator>>= (const BigInt&);
+    BigInt& operator>>= (bbi_uval_t);
+
     BigInt operator& (const BigInt&);
-    BigInt operator| (bbi_chunk_t);
+    BigInt operator& (bbi_uval_t);
+
     BigInt operator| (const BigInt&);
-    BigInt operator^ (bbi_chunk_t);
+    BigInt operator| (bbi_uval_t);
+
     BigInt operator^ (const BigInt&);
-    // or these two
-    BigInt operator<< (bbi_chunk_t);
-    BigInt operator>> (bbi_chunk_t);
+    BigInt operator^ (bbi_uval_t);
+
+    // As above - physical memory limits, but ease of use
+    BigInt operator<< (const BigInt&);
+    BigInt operator<< (bbi_uval_t);
+
+    BigInt operator>> (const BigInt&);
+    BigInt operator>> (bbi_uval_t);
 
     // Other stuff
     bool is_zero() const;
