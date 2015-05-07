@@ -31,3 +31,4 @@ tmpcode
 unittest-cpp
 test_bbi
 bbi
+gtest*
