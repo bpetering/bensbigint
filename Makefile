@@ -24,7 +24,7 @@ test: ${TEST_NAME}.cpp bbi.h bbi.cpp buildgtest
 	./${TEST_NAME}
 
 clean:
-	rm -f *.o core bbi ${TEST_NAME} libgtest.a gtest-all.o
+	rm -f *.o core bbi ${TEST_NAME} libgtest.a gtest-all.o core test_bbi2
 
 st:
 	subl bbi.* ${TEST_NAME}.cpp

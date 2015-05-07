@@ -121,8 +121,8 @@ public:
     BigInt operator>> (bbi_uval_t);
 
     // Other stuff
-    inline bool is_zero() const;
-    inline bool is_negative() const;
+    bool is_zero() const;
+    bool is_negative() const;
     int get_bit(size_t) const;
     // TODO abs?
     operator bool() const;

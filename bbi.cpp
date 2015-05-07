@@ -208,6 +208,8 @@ BigInt& BigInt::operator= (const BigInt& other) {
 
 bool BigInt::operator== (bbi_sval_t val) {
     if (val < 0) {
+        cout << "checking negative" << endl;
+        cout << "-val = " << -val << endl;
         return ( (data[0] == -val) && negative );    // TODO max?
     }
     else {
@@ -558,7 +560,7 @@ BigInt BigInt::operator>> (bbi_uval_t val) {
 // Other stuff
 //
 
-inline bool BigInt::is_zero() const {
+bool BigInt::is_zero() const {
     bbi_data::size_type sz = data.size();
     // Count up more efficient
     for (bbi_data::size_type i = sz-1; i > 0; --i) {
@@ -571,7 +573,7 @@ inline bool BigInt::is_zero() const {
     return true;
 }
 
-inline bool BigInt::is_negative() const {
+bool BigInt::is_negative() const {
     return negative;
 }
 
@@ -649,11 +651,10 @@ inline bool BigInt::subn_would_underflow(bbi_chunk_t a, bbi_chunk_t b) {
     return b > a;
 }
 
-int main() {
-    BigInt b = 1;
-    BigInt c = 2;
-    b -= c;
-    cout << b.bits() << endl;
-    cout << b.is_negative() << endl;
-}
+// int main() {
+//     BigInt b = -1;
+//     if (b == -1) {
+//         cout << "cool" << endl;
+//     }
+// }
 
