@@ -14,7 +14,9 @@ using std::string;
 typedef unsigned char           bbi_chunk_t;        // testing
 typedef signed char             bbi_sval_t;         // testing
 typedef unsigned char           bbi_uval_t;         // testing
+
 typedef vector<bbi_chunk_t>     bbi_data;
+
 
 class BigInt {
 public:
@@ -65,12 +67,11 @@ public:
     // Basic arithmetic
     BigInt& operator+= (const BigInt&);
     BigInt& operator+= (bbi_sval_t);
-
-    BigInt& operator++ ();
+    BigInt& operator++ ();                  // += 1
 
     BigInt& operator-= (const BigInt&);
-
-    BigInt& operator-- ();
+    BigInt& operator-= (bbi_sval_t);
+    BigInt& operator-- ();                  // -= 1
 
     BigInt& operator*= (const BigInt&);
     BigInt& operator/= (const BigInt&);
@@ -145,7 +146,9 @@ private:
     bbi_data::size_type size() const;
     inline bbi_data::size_type num_free_chunks() const;
     inline bbi_data::size_type freeish_bits() const;
+
     static inline bool addn_would_overflow(bbi_chunk_t, bbi_chunk_t);
+    static inline bool subn_would_underflow(bbi_chunk_t, bbi_chunk_t);  // TODO static
 
     // Safe bool idiom
     // http://www.artima.com/cppsource/safebool.html
