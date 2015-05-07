@@ -121,8 +121,8 @@ public:
     BigInt operator>> (bbi_uval_t);
 
     // Other stuff
-    bool is_zero() const;
-    bool is_negative() const;
+    inline bool is_zero() const;
+    inline bool is_negative() const;
     int get_bit(size_t) const;
     // TODO abs?
     operator bool() const;
@@ -137,13 +137,12 @@ public:
     static const bbi_chunk_t *MASK_LOOKUP_BOTTOM;  // lookup table for bit
 
 private:
-    bbi_data *data;
+    bbi_data data;
     bool negative;
 
     void init(bbi_data::size_type);
     void expand();
     void clear();
-    bbi_data::size_type size() const;
     inline bbi_data::size_type num_free_chunks() const;
     inline bbi_data::size_type freeish_bits() const;
 

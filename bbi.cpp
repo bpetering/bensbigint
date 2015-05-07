@@ -38,61 +38,44 @@ const bbi_data::size_type BigInt::INITIAL_BITS = 32;
 const bbi_chunk_t* BigInt::MASK_LOOKUP_TOP = mask_lookup_8_top;
 const bbi_chunk_t* BigInt::MASK_LOOKUP_BOTTOM = mask_lookup_8_bottom;
 
-// TODO experiment with reference counting (like string) vs copying
+void BigInt::init(bbi_data::size_type initial_chunks = INITIAL_CHUNKS) {
+    negative = false;
+    data.reserve(initial_chunks);
+    data.resize(initial_chunks, 0);
+}
 
 BigInt::BigInt() {
-    data = 0;
-    negative = false;
+    init();
 }
 
 BigInt::~BigInt() {
-    delete data;
-}
-
-bbi_data::size_type BigInt::size() const {
-    assert(data);
-    return data->size();
-}
-
-void BigInt::init(bbi_data::size_type initial_chunks) {
-    data = new bbi_data (initial_chunks);
-    negative = false;
-    for (bbi_data::size_type i = 0; i < initial_chunks; ++i) {
-        (*data)[i] = 0;
-    }
 }
 
 BigInt::BigInt(bbi_sval_t val) {
-    init(INITIAL_CHUNKS);
+    init();
+
     // TODO what if max negative
     if (val < 0) {
         val = -val;
         negative = true;
     }
-    (*data)[0] = val;
+    data[0] = val;
 }
 
 BigInt::BigInt(const BigInt& other) {
-    if (other.data == 0)
-        return;
-    // This is the only time we shouldn't use init(), since copying
-    bbi_data::size_type other_size = other.size();
-    data = new bbi_data (other_size);
+    data = other.data;
     negative = other.negative;
-    for (bbi_data::size_type i = 0; i < other_size; ++i) {
-        (*data)[i] = (*other.data)[i];
-    }
 }
 
 BigInt::BigInt(string s) {
-    init(INITIAL_CHUNKS);
+    init();
 
     string::size_type len = s.size();
     if (len == 0) {
         return;
     }
     if (len == 1 && s[0] >= '0' && s[0] <= '9') {
-        (*data)[0] = s[0] - '0';
+        data[0] = s[0] - '0';
         return;
     }
 
@@ -117,7 +100,6 @@ BigInt::BigInt(string s) {
 }
 
 string BigInt::to_string(unsigned int base=10) const {
-    assert(data);
     stringstream ss;
     if (base < 2 || base > 36) {
         // TODO exception
@@ -169,22 +151,20 @@ string BigInt::chunk_bits(bbi_chunk_t n) {
 }
 
 string BigInt::all_bits(string sep=" ") const {
-    assert(data);
     if (is_zero())
         return "0";
     string ret;
-    for (bbi_data::size_type i = data->size()-1; i > 0; --i) {
-        bbi_chunk_t chunk = (*data)[i];
+    for (bbi_data::size_type i = data.size()-1; i > 0; --i) {
+        bbi_chunk_t chunk = data[i];
         ret += chunk_bits(chunk);
         ret += sep;
     }
-    bbi_chunk_t chunk = (*data)[0];
+    bbi_chunk_t chunk = data[0];
     ret += chunk_bits(chunk);
     return ret;
 }
 
 string BigInt::bits() const {
-    assert(data);
     if (is_zero())
         return "0";
     string tmp = all_bits("");
@@ -205,52 +185,45 @@ string BigInt::bits() const {
 BigInt& BigInt::operator= (bbi_sval_t val) {
     // Variables tend to hold values of similar sizes, so don't realloc
     // Just zero chunks
-    if (data)
-        clear();
-    else
-        data = new bbi_data (INITIAL_CHUNKS);
+    clear();
     if (val < 0) {
         val = -val;     // TODO max negative
         negative = true;
     }
-    (*data)[0] = val;
+    data[0] = val;
     return *this;
 }
 
 BigInt& BigInt::operator= (const BigInt& other) {
-    assert(data);
-
-    bbi_data::size_type other_size = other.size();
-    while (data->size() < other_size) {
+    bbi_data::size_type other_size = other.data.size();
+    while (data.size() < other_size) {
         expand();
     }
     negative = other.negative;
     for (bbi_data::size_type i = 0; i < other_size; ++i) {
-        (*data)[i] = (*other.data)[i];
+        data[i] = other.data[i];
     }
     return *this;
 }
 
 bool BigInt::operator== (bbi_sval_t val) {
-    assert(data);
     if (val < 0) {
-        return ( ((*data)[0] == -val) && negative );    // TODO max?
+        return ( (data[0] == -val) && negative );    // TODO max?
     }
     else {
-        return ( (*data)[0] == val );
+        return ( data[0] == val );
     }
 }
 
 bool BigInt::operator== (const BigInt& other) {
-    assert(data);
     if (negative != other.negative)
         return false;
-    bbi_data::size_type min_size = min(data->size(), other.size());
+    bbi_data::size_type min_size = min(data.size(), other.data.size());
     for (bbi_data::size_type i = min_size; i > 0; --i) {
-        if ((*data)[i] != (*other.data)[i])
+        if (data[i] != other.data[i])
             return false;
     }
-    if ((*data)[0] != (*other.data)[0])
+    if (data[0] != other.data[0])
         return false;
     return true;
 }
@@ -301,16 +274,13 @@ bool BigInt::operator>= (const BigInt& other) {
 //
 
 BigInt& BigInt::operator+= (const BigInt& other) {
-    assert(data);
-    assert(other.data);
-
     // Calculate minimum size for result data
     // - start with largest existing size
     //cout << "this = " << this->bits() << endl;
     //cout << "other = " << other.bits() << endl;
-    bbi_data::size_type needed_chunks = max(data->size(), other.size());
-    while (needed_chunks > data->size()) {
-        //cout << "data size = " << data->size() << ", expanding..." << endl;
+    bbi_data::size_type needed_chunks = max(data.size(), other.data.size());
+    while (needed_chunks > data.size()) {
+        //cout << "data size = " << data.size() << ", expanding..." << endl;
         expand();
     }
     //cout << "AFTER EXPAND" << endl;
@@ -320,17 +290,17 @@ BigInt& BigInt::operator+= (const BigInt& other) {
 
     bool prev_overflow = false;
     unsigned long i;
-    for (i = 0; i < data->size(); ++i) {
-        bbi_chunk_t a = (*data)[i];
-        bbi_chunk_t b = (*other.data)[i];
+    for (i = 0; i < data.size(); ++i) {
+        bbi_chunk_t a = data[i];
+        bbi_chunk_t b = other.data[i];
         //cout << "a bits = " << bits(a) << endl;
         //cout << "b bits = " << bits(b) << endl;
-        (*data)[i] = a + b;
+        data[i] = a + b;
         if (prev_overflow) {
             //cout << "prev overflow true" << endl;
             // Check previous iteration
             // This can't overflow, will always have at least one 0 bit
-            (*data)[i]++;
+            data[i]++;
             prev_overflow = false;
         }
         // TODO optimization? here and subn, just perform op and check?
@@ -344,12 +314,12 @@ BigInt& BigInt::operator+= (const BigInt& other) {
 
     bool final_overflow = false;
     if (prev_overflow) {
-        if ((*data)[i] == MAX_CHUNK)
+        if (data[i] == MAX_CHUNK)
             final_overflow = true;
-        (*data)[i] += 1;
+        data[i] += 1;
         if (final_overflow) {
             expand();
-            (*data)[i+1] += 1;
+            data[i+1] += 1;
         }
     }
 
@@ -357,27 +327,22 @@ BigInt& BigInt::operator+= (const BigInt& other) {
 }
 
 BigInt& BigInt::operator+= (bbi_sval_t n) {
-    assert(data);
     BigInt tmp (n);
     this->operator+=(tmp);
     return *this;
 }
 
 BigInt& BigInt::operator++ () {
-    assert(data);
     this->operator+=(1);
     return *this;
 }
 
 
 BigInt& BigInt::operator-= (const BigInt& other) {
-    assert(data);
-    assert(other.data);
-
     // Calculate minimum size for result data
     // - start with largest existing size
-    bbi_data::size_type needed_chunks = max(data->size(), other.size());
-    while (needed_chunks > data->size())
+    bbi_data::size_type needed_chunks = max(data.size(), other.data.size());
+    while (needed_chunks > data.size())
         expand();
 
     // See if we'll go negative
@@ -385,10 +350,10 @@ BigInt& BigInt::operator-= (const BigInt& other) {
         negative = true;
 
     unsigned long i;
-    for (i = 0; i < data->size(); ++i) {
-        bbi_chunk_t tmp = (*data)[i];
-        (*data)[i] -= (*other.data)[i];
-        if ((*data)[i] > tmp)
+    for (i = 0; i < data.size(); ++i) {
+        bbi_chunk_t tmp = data[i];
+        data[i] -= other.data[i];
+        if (data[i] > tmp)
             // TODO underflow
             return *this;
     }
@@ -396,7 +361,6 @@ BigInt& BigInt::operator-= (const BigInt& other) {
 }
 
 BigInt& BigInt::operator-= (bbi_sval_t n) {
-    assert(data);
     BigInt tmp (n);
     this->operator-=(tmp);
     return *this;
@@ -404,7 +368,6 @@ BigInt& BigInt::operator-= (bbi_sval_t n) {
 
 // TODO optimize - specialized code for increment/decrement
 BigInt& BigInt::operator-- () {
-    assert(data);
     this->operator-=(1);
     return *this;
 }
@@ -413,8 +376,6 @@ BigInt& BigInt::operator-- () {
 
 
 BigInt& BigInt::operator*= (const BigInt& other) {
-    assert(data);
-    assert(other.data);
     BigInt tmp_this = *this;
     BigInt tmp_other = other;
 
@@ -443,36 +404,25 @@ BigInt& BigInt::operator*= (const BigInt& other) {
 }
 
 BigInt& BigInt::operator/= (const BigInt& other) {
-    assert(data);
-    assert(other.data);
     return *this;
 }
 
 BigInt BigInt::operator+ (const BigInt& other) {
-    assert(data);
-    assert(other.data);
-
     BigInt ret;
     return ret;
 }
 
 BigInt BigInt::operator- (const BigInt& other) {
-    assert(data);
-    assert(other.data);
     BigInt ret;
     return ret;
 }
 
 BigInt BigInt::operator* (const BigInt& other) {
-    assert(data);
-    assert(other.data);
     BigInt ret;
     return ret;
 }
 
 BigInt BigInt::operator/ (const BigInt& other) {
-    assert(data);
-    assert(other.data);
     BigInt ret;
     return ret;
 }
@@ -483,12 +433,10 @@ BigInt BigInt::operator/ (const BigInt& other) {
 
 
 BigInt BigInt::operator~ () {
-    assert(data);
-
     BigInt ret (*this);
-    bbi_data::size_type len = data->size();
+    bbi_data::size_type len = data.size();
     for (bbi_data::size_type i = 0; i < len; ++i) {
-        (*ret.data)[i] = ~ (*ret.data)[i];
+        ret.data[i] = ~ ret.data[i];
     }
     return ret;
 }
@@ -514,66 +462,59 @@ BigInt& BigInt::operator^= (bbi_uval_t val) {
 }
 
 BigInt& BigInt::operator^= (const BigInt& other) {
-    assert(data);
-    assert(other.data);
-
     return *this;
 }
 
 BigInt& BigInt::operator<<= (bbi_uval_t n) {
-    assert(data);
     if (n == 0)
         return *this;
 
-    //cout << "size before: " << data->size() << endl;
+    //cout << "size before: " << data.size() << endl;
     while (n > freeish_bits())
         expand();
-    //cout << "size after: " << data->size() << endl;
+    //cout << "size after: " << data.size() << endl;
 
     bbi_chunk_t mask = MASK_LOOKUP_TOP[n];           // TODO 32
 
-    for (long i = data->size()-1; i >= 0; --i) {
+    for (long i = data.size()-1; i >= 0; --i) {
         // Save top n bits of chunk
-        bbi_chunk_t chunk = (*data)[i];
+        bbi_chunk_t chunk = data[i];
         bbi_chunk_t top_n = chunk & mask;
         top_n >>= BITS_PER_CHUNK - n;
         // Move those bits to next chunk
-        bbi_chunk_t tmp_next = (*data)[i+1];
+        bbi_chunk_t tmp_next = data[i+1];
         tmp_next |= top_n;
-        (*data)[i+1] = tmp_next;
+        data[i+1] = tmp_next;
         // Shift
         chunk <<= n;
         // Store
-        (*data)[i] = chunk;
+        data[i] = chunk;
         //cout << bits() << endl << endl;
     }
     return *this;
 }
 
 BigInt& BigInt::operator>>= (bbi_uval_t n) {
-    assert(data);
     if (n == 0)
         return *this;
 
     bbi_chunk_t mask = MASK_LOOKUP_BOTTOM[n];           // TODO 32
 
-    (*data)[0] >>= n;
-    for (unsigned long i = 1; i < data->size(); ++i) {
-        bbi_chunk_t chunk = (*data)[i];
+    data[0] >>= n;
+    for (unsigned long i = 1; i < data.size(); ++i) {
+        bbi_chunk_t chunk = data[i];
         bbi_chunk_t bottom_n = chunk & mask;
         chunk >>= n;
-        (*data)[i] = chunk;
-        (*data)[i-1] |= (bottom_n << (BITS_PER_CHUNK-n));
+        data[i] = chunk;
+        data[i-1] |= (bottom_n << (BITS_PER_CHUNK-n));
     }
 
     return *this;
 }
 
 BigInt BigInt::operator& (bbi_uval_t n) {
-    assert(data);
-
-    BigInt ret ((*data)[0]);
-    (*ret.data)[0] &= n;
+    BigInt ret (data[0]);
+    ret.data[0] &= n;
     return ret;
 }
 
@@ -617,23 +558,20 @@ BigInt BigInt::operator>> (bbi_uval_t val) {
 // Other stuff
 //
 
-bool BigInt::is_zero() const {
-    if (data == 0)
-        return false;
-
-    bbi_data::size_type sz = data->size();
+inline bool BigInt::is_zero() const {
+    bbi_data::size_type sz = data.size();
     // Count up more efficient
-    for (bbi_data::size_type i = 0; i < sz; ++i) {
-        if ((*data)[i] != 0) {
+    for (bbi_data::size_type i = sz-1; i > 0; --i) {
+        if (data[i] != 0) {
             return false;
         }
     }
+    if (data[0] != 0)
+        return false;
     return true;
 }
 
-bool BigInt::is_negative() const {
-    if (data == 0)
-        return false;
+inline bool BigInt::is_negative() const {
     return negative;
 }
 
@@ -647,8 +585,7 @@ bool BigInt::operator! () const {
 
 // Sometimes want to test a bit without creating a whole new object
 int BigInt::get_bit(size_t bit_idx) const {
-    assert(data);
-    size_t max_bit_idx = data->size() * BITS_PER_CHUNK - 1;
+    size_t max_bit_idx = data.size() * BITS_PER_CHUNK - 1;
     if (bit_idx > max_bit_idx)
         return 0;
 
@@ -656,7 +593,7 @@ int BigInt::get_bit(size_t bit_idx) const {
     //cout << "chunk_idx = " << chunk_idx << endl;
     size_t chunk_offset = bit_idx % BITS_PER_CHUNK;
     //cout << "chunk_offset = " << chunk_offset << endl;
-    bbi_chunk_t chunk = (*data)[chunk_idx];
+    bbi_chunk_t chunk = data[chunk_idx];
     //cout << "chunk = " << bits(chunk) << endl;
     bbi_chunk_t mask = MASK_LOOKUP_BOTTOM[chunk_offset+1];
     //cout << "mask = " << bits(mask) << endl;
@@ -671,27 +608,24 @@ int BigInt::get_bit(size_t bit_idx) const {
 //
 
 void BigInt::expand() {
-    assert(data);
-    data->resize(data->size() * 2);
+    data.resize(data.size() * 2);
 }
 
 void BigInt::clear() {
-    assert(data);
-    bbi_data::size_type len = data->size();
+    bbi_data::size_type len = data.size();
     for (bbi_data::size_type i = 0; i < len; ++i) {
-        (*data)[i] = 0;
+        data[i] = 0;
     }
     negative = false;
 }
 
 inline bbi_data::size_type BigInt::num_free_chunks() const {
-    assert(data);
     bbi_data::size_type ret = 0;
-    //cout << "num_free_chunks, size = " << data->size() << endl;
-    bbi_data::size_type sz = data->size();
+    //cout << "num_free_chunks, size = " << data.size() << endl;
+    bbi_data::size_type sz = data.size();
     //cout << "size = " << sz << endl;
     for (bbi_data::size_type i = sz-1; i > 0; --i) {
-        if ((*data)[i] == 0)
+        if (data[i] == 0)
             ++ret;
         else
             break;
