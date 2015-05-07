@@ -208,8 +208,6 @@ BigInt& BigInt::operator= (const BigInt& other) {
 
 bool BigInt::operator== (bbi_sval_t val) {
     if (val < 0) {
-        cout << "checking negative" << endl;
-        cout << "-val = " << -val << endl;
         return ( (data[0] == -val) && negative );    // TODO max?
     }
     else {
@@ -239,35 +237,51 @@ bool BigInt::operator!= (const BigInt& other) {
 }
 
 bool BigInt::operator< (bbi_sval_t val) {
-    return false;
+    return (data[0] < val);
 }
 
 bool BigInt::operator< (const BigInt& other) {
-    return false;
+    if (negative && (!other.negative))
+        return true;
+    if (!negative && other.negative)
+        return false;
+    // Now compare, ignoring negative
 }
 
 bool BigInt::operator> (bbi_sval_t val) {
-    return false;
+    return (data[0] > val);
 }
 
 bool BigInt::operator> (const BigInt& other) {
-    return false;
+    if (negative && (!other.negative))
+        return false;
+    if (!negative && other.negative)
+        return true;
+    // Now compare, ignoring negative
 }
 
 bool BigInt::operator<= (bbi_sval_t val) {
-    return false;
+    return (data[0] <= val);
 }
 
 bool BigInt::operator<= (const BigInt& other) {
-    return false;
+    if (negative && (!other.negative))
+        return true;
+    if (!negative && other.negative)
+        return false;
+    // Now compare, ignoring negative
 }
 
 bool BigInt::operator>= (bbi_sval_t val) {
-    return false;
+    return (data[0] >= val);
 }
 
 bool BigInt::operator>= (const BigInt& other) {
-    return false;
+    if (negative && (!other.negative))
+        return false;
+    if (!negative && other.negative)
+        return true;
+    // Now compare, ignoring negative
 }
 
 
