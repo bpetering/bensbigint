@@ -215,48 +215,131 @@ TEST(Compare, EqualsObject) {
     BigInt g = -1;
     EXPECT_EQ(f, g);
     EXPECT_EQ(g, f);
+
+    BigInt h ("1234512345678906789012345");
+    BigInt i ("1234512345678906789012345");
+    EXPECT_EQ(h, i);
+    EXPECT_EQ(i, h);
 }
 
 TEST(Compare, NotEqualsLiteral) {
+    BigInt b (0);
+    EXPECT_TRUE(b != 1);
+    EXPECT_TRUE(b != -1);
 
+    BigInt c (1);
+    EXPECT_TRUE(c != 0);
+    EXPECT_TRUE(c != -1);
+
+    BigInt d (0);
+    EXPECT_TRUE(d != 1);
+    EXPECT_TRUE(d != -1);
 }
 
 TEST(Compare, NotEqualsObject) {
+    BigInt b (0);
+    BigInt c (1);
+    EXPECT_TRUE(b != c);
+    EXPECT_TRUE(c != c);
 
+    BigInt e (-1);
+    EXPECT_TRUE(b != e);
+    EXPECT_TRUE(e != b);
+    EXPECT_TRUE(c != e);
+    EXPECT_TRUE(e != c);
+
+    BigInt f ("1234512345678906789012345");
+    BigInt g ("-1234512345678906789012345");
+    EXPECT_TRUE(f != g);
+    EXPECT_TRUE(g != f);
 }
 
 TEST(Compare, LessThanLiteral) {
-
+    BigInt b = 0;
+    EXPECT_TRUE(b < 1);
+    EXPECT_TRUE(b < 100);
 }
 
 TEST(Compare, LessThanObject) {
-
+    BigInt b = 1;
+    BigInt c = 2;
+    BigInt d = 100;
+    BigInt e = -100;
+    BigInt f ("1234567890123456789012345");
+    BigInt g ("-1234567890123456789012345");
+    EXPECT_TRUE(b < c);
+    EXPECT_TRUE(b < d);
+    EXPECT_TRUE(c < d);
+    EXPECT_TRUE(e < b);
+    EXPECT_TRUE(e < d);
+    EXPECT_TRUE(g < f);
+    EXPECT_TRUE(g < d);
+    EXPECT_TRUE(g < b);
 }
 
 TEST(Compare, GreaterThanLiteral) {
-
+    BigInt b = 1;
+    EXPECT_TRUE(b > 0);
+    EXPECT_TRUE(b > -1);
 }
 
 TEST(Compare, GreaterThanObject) {
-
+    BigInt b = 10;
+    BigInt c = 1000;
+    BigInt e ("1234512345123451234567890");
+    BigInt f ("-1234512345123451234567890");
+    EXPECT_TRUE(c > b);
+    EXPECT_TRUE(e > c);
+    EXPECT_TRUE(e > b);
+    EXPECT_TRUE(e > f);
+    EXPECT_TRUE(c > f);
 }
 
 TEST(Compare, LessThanEqualsLiteral) {
-
+    BigInt b = 1;
+    EXPECT_TRUE(b <= 1);
+    EXPECT_TRUE(b <= 2);
+    EXPECT_TRUE(b <= 1000);
+    // TODO false tests !(<= 0)
 }
 
 TEST(Compare, LessThanEqualsObject) {
-
+    BigInt b = 1;
+    BigInt c = 1;
+    BigInt d = 10;
+    BigInt e ("1234512345123451234567890");
+    BigInt f ("-1234512345123451234567890");
+    EXPECT_TRUE(b <= c);
+    EXPECT_TRUE(c <= b);
+    EXPECT_TRUE(b <= d);
+    EXPECT_TRUE(b <= e);
+    EXPECT_TRUE(d <= e);
+    EXPECT_TRUE(f <= e);
+    EXPECT_TRUE(f <= d);
+    EXPECT_TRUE(f <= b);
 }
 
 TEST(Compare, GreaterThanEqualsLiteral) {
-
+    BigInt b = 1;
+    BigInt e ("1234512345123451234567890");
+    BigInt f ("-1234512345123451234567890");
+    EXPECT_TRUE(b >= 0);
+    EXPECT_TRUE(b >= 1);
+    EXPECT_TRUE(e >= 0);
+    EXPECT_TRUE(e >= 1000);
 }
 
 TEST(Compare, GreaterThanEqualsObject) {
-
+    BigInt b = 0;
+    BigInt c = -1;
+    BigInt d = 0;
+    BigInt e ("1234512345123451234567890");
+    BigInt f ("-1234512345123451234567890");
+    EXPECT_TRUE(b >= c);
+    EXPECT_TRUE(b >= d);
+    EXPECT_TRUE(d >= b);
+    // TODO finish this
 }
-
 
 
 
