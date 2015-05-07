@@ -18,10 +18,12 @@ using std::min;
 const bbi_data::size_type BigInt::BITS_PER_CHUNK = sizeof(bbi_chunk_t) * CHAR_BIT;
 const bbi_chunk_t BigInt::MAX_CHUNK = std::numeric_limits<bbi_chunk_t>::max();
 const bbi_chunk_t BigInt::HALF_MAX_CHUNK = BigInt::MAX_CHUNK / 2 + 1;
-// Default chunk size should not be 1. Otherwise things like a++
-// could result in vector realloc -- shouldn't be that expensive
-// Probably also good if this results in a value that can be aligned
-// TODO experiment with ideal size
+// INITIAL_CHUNKS should not be 1. Otherwise things like a++
+// could result in vector realloc -- shouldn't be that expensive.
+// Good rule of thumb: choose chunk size that results in default bit-width at
+// least 2*CPU word size (e.g. 128 bits for a 64-bit architecture)
+// Probably also good if this results in a structure that can be word-aligned,
+// so avoid INITIAL_CHUNKS == 3 or so.
 const bbi_data::size_type BigInt::INITIAL_CHUNKS = 128 / (BigInt::BITS_PER_CHUNK / 2);
 const bbi_data::size_type BigInt::INITIAL_BITS = BigInt::INITIAL_CHUNKS * BigInt::BITS_PER_CHUNK;
 */
@@ -196,13 +198,6 @@ string BigInt::bits() const {
     return tmp.substr(i);
 }
 
-inline bool BigInt::addn_would_overflow(bbi_chunk_t a, bbi_chunk_t b) {
-    bbi_chunk_t a_compl = ~a;
-    if (b <= a_compl)
-        return false;
-    return true;
-}
-
 //
 // Assign and Compare
 //
@@ -239,7 +234,7 @@ BigInt& BigInt::operator= (const BigInt& other) {
 bool BigInt::operator== (bbi_sval_t val) {
     assert(data);
     if (val < 0) {
-        return ( ((*data)[0] == -val) && negative );
+        return ( ((*data)[0] == -val) && negative );    // TODO max?
     }
     else {
         return ( (*data)[0] == val );
@@ -248,11 +243,15 @@ bool BigInt::operator== (bbi_sval_t val) {
 
 bool BigInt::operator== (const BigInt& other) {
     assert(data);
+    if (negative != other.negative)
+        return false;
     bbi_data::size_type min_size = min(data->size(), other.size());
-    for (bbi_data::size_type i = 0; i < min_size; ++i) {
+    for (bbi_data::size_type i = min_size; i > 0; --i) {
         if ((*data)[i] != (*other.data)[i])
             return false;
     }
+    if ((*data)[0] != (*other.data)[0])
+        return false;
     return true;
 }
 
@@ -334,6 +333,7 @@ BigInt& BigInt::operator+= (const BigInt& other) {
             (*data)[i]++;
             prev_overflow = false;
         }
+        // TODO optimization? here and subn, just perform op and check?
         if (addn_would_overflow(a, b)) {
             prev_overflow = true;
             //cout << "set prev overflow" << endl;
@@ -374,40 +374,24 @@ BigInt& BigInt::operator-= (const BigInt& other) {
     assert(data);
     assert(other.data);
 
-    // // Calculate minimum size for result data
-    // // - start with largest existing size
-    // bbi_data::size_type needed_chunks = max(data->size(), other.size());
-    // while (needed_chunks > data->size())
-    //     expand();
+    // Calculate minimum size for result data
+    // - start with largest existing size
+    bbi_data::size_type needed_chunks = max(data->size(), other.size());
+    while (needed_chunks > data->size())
+        expand();
 
-    // bool prev_underflow = false;
-    // unsigned long i;
-    // for (i = 0; i < data->size(); ++i) {
-    //     bbi_chunk_t a = (*data)[i];
-    //     bbi_chunk_t b = (*other.data)[i];
-    //     (*data)[i] = a - b;
-    //     if (prev_underflow) {
-    //         // Check previous iteration
-    //         // This can't overflow, will always have at least one 0 bit
-    //         (*data)[i]++;
-    //         prev_underflow = false;
-    //     }
-    //     if (addn_would_underflow(a, b)) {
-    //         prev_underflow = true;
-    //     }
-    // }
+    // See if we'll go negative
+    if (other > *this)
+        negative = true;
 
-    // bool final_underflow = false;
-    // if (prev_underflow) {
-    //     if ((*data)[i] == MAX_CHUNK)
-    //         final_underflow = true;
-    //     (*data)[i] += 1;
-    //     if (final_underflow) {
-    //         expand();
-    //         (*data)[i+1] += 1;
-    //     }
-    // }
-
+    unsigned long i;
+    for (i = 0; i < data->size(); ++i) {
+        bbi_chunk_t tmp = (*data)[i];
+        (*data)[i] -= (*other.data)[i];
+        if ((*data)[i] > tmp)
+            // TODO underflow
+            return *this;
+    }
     return *this;
 }
 
@@ -418,6 +402,7 @@ BigInt& BigInt::operator-= (bbi_sval_t n) {
     return *this;
 }
 
+// TODO optimize - specialized code for increment/decrement
 BigInt& BigInt::operator-- () {
     assert(data);
     this->operator-=(1);
@@ -661,11 +646,15 @@ bool BigInt::operator! () const {
 }
 
 // Sometimes want to test a bit without creating a whole new object
-int BigInt::get_bit(size_t bit_pos) const {
+int BigInt::get_bit(size_t bit_idx) const {
     assert(data);
-    size_t chunk_idx = bit_pos / BITS_PER_CHUNK;
+    size_t max_bit_idx = data->size() * BITS_PER_CHUNK - 1;
+    if (bit_idx > max_bit_idx)
+        return 0;
+
+    size_t chunk_idx = bit_idx / BITS_PER_CHUNK;
     //cout << "chunk_idx = " << chunk_idx << endl;
-    size_t chunk_offset = bit_pos % BITS_PER_CHUNK;
+    size_t chunk_offset = bit_idx % BITS_PER_CHUNK;
     //cout << "chunk_offset = " << chunk_offset << endl;
     bbi_chunk_t chunk = (*data)[chunk_idx];
     //cout << "chunk = " << bits(chunk) << endl;
@@ -715,10 +704,22 @@ inline bbi_data::size_type BigInt::freeish_bits() const {
     return num_free_chunks() * BITS_PER_CHUNK;
 }
 
-// int main() {
-//     BigInt b = 6;
-//     cout << b.all_bits() << endl;
-//     b += 127;
-//     cout << b.all_bits() << endl;
-// }
+inline bool BigInt::addn_would_overflow(bbi_chunk_t a, bbi_chunk_t b) {
+    bbi_chunk_t a_compl = ~a;
+    if (b <= a_compl)
+        return false;
+    return true;
+}
+
+inline bool BigInt::subn_would_underflow(bbi_chunk_t a, bbi_chunk_t b) {
+    return b > a;
+}
+
+int main() {
+    BigInt b = 1;
+    BigInt c = 2;
+    b -= c;
+    cout << b.bits() << endl;
+    cout << b.is_negative() << endl;
+}
 

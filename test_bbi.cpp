@@ -61,7 +61,6 @@ TEST(ChunkBits) {
 
 // Tests for .all_bits() that don't need operatorX directly or indirectly
 TEST(AllBitsSimple) {
-
 }
 
 // Tests for .bits() that don't need operatorX directly or indirectly
@@ -243,7 +242,7 @@ TEST(AddAssign) {
     // b += 12345;
     // b += 123451234512345;
 
-    // Now same tests but with BigInt instead of bbi_chunk_t
+    // Now same tests but with BigInt instead of bbi_sval_t
     BigInt c = 0;
     CHECK(c.bits() == "0");
     BigInt d = 1;
@@ -416,6 +415,18 @@ TEST(MultAssign) {
 
 
     // check hard limits TODO
+}
+
+TEST(SubAssign) {
+    BigInt b = 1;
+    CHECK(b.bits() == "1");
+    b -= 1;
+    CHECK(b.bits() == "0");
+
+    BigInt b2 = 1;
+    b2 -= 2;
+    CHECK(b2.bits() == "1");
+    CHECK(b2.is_negative());
 }
 
 // TEST(BitwiseNot) {
